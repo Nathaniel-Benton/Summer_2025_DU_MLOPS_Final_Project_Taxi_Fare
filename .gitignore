@@ -1,0 +1,25 @@
+# Python / Environment
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+
+# Windows metadata (WSL downloads)
+*:Zone.Identifier
+
+# W&B local run cache
+wandb/
+
+# Data files (Don't push heavy raw datasets or samples to Git)
+*.parquet
+*.csv
+
+# Model artifacts (Trained models go to S3, not GitHub)
+*.pkl
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
