@@ -1,8 +1,22 @@
+# Backend API
 fastapi
 uvicorn
+pydantic
+ 
+# Model training / inference
 pandas
 scikit-learn
 xgboost
 joblib
+pyarrow          # needed by pandas to read .parquet trip data
+ 
+# Experiment tracking
 wandb
+ 
+# AWS / DynamoDB
 boto3
+ 
+# Frontend apps (prediction UI + monitoring dashboard)
+streamlit
+requests
+matplotlib
