@@ -66,6 +66,30 @@ class FeedbackInput(BaseModel):
     actual_fare: float
 
 
+def build_input_dataframe(trip: TripInput) -> pd.DataFrame:
+    """
+    Convert a TripInput into the single-row DataFrame layout the model
+    expects. Pulled out as its own function so it can be unit tested
+    without needing a loaded model or any AWS/W&B dependency.
+    """
+    return pd.DataFrame([{
+        "trip_distance": trip.trip_distance,
+        "passenger_count": trip.passenger_count,
+        "PULocationID": trip.PULocationID,
+        "DOLocationID": trip.DOLocationID,
+        "RatecodeID": trip.RatecodeID
+    }])
+
+
+def to_decimal(value) -> Decimal:
+    """
+    Convert a float to a DynamoDB-safe Decimal via string, to avoid
+    binary floating-point artifacts (e.g. Decimal(0.1) picking up long
+    trailing digits). DynamoDB rejects native Python floats outright.
+    """
+    return Decimal(str(value))
+
+
 @app.get("/health")
 def health_check():
     """
@@ -96,13 +120,7 @@ def predict(trip: TripInput):
     start_time = time.perf_counter()
 
     # Convert incoming request body into a pandas DataFrame matching the feature layout
-    input_data = pd.DataFrame([{
-        "trip_distance": trip.trip_distance,
-        "passenger_count": trip.passenger_count,
-        "PULocationID": trip.PULocationID,
-        "DOLocationID": trip.DOLocationID,
-        "RatecodeID": trip.RatecodeID
-    }])
+    input_data = build_input_dataframe(trip)
 
     # Generate prediction using the loaded pipeline
     prediction = float(model.predict(input_data)[0])
@@ -118,13 +136,13 @@ def predict(trip: TripInput):
             prediction_table.put_item(Item={
                 "prediction_id": prediction_id,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "trip_distance": Decimal(str(trip.trip_distance)),
+                "trip_distance": to_decimal(trip.trip_distance),
                 "passenger_count": trip.passenger_count,
                 "PULocationID": trip.PULocationID,
                 "DOLocationID": trip.DOLocationID,
                 "RatecodeID": trip.RatecodeID,
-                "predicted_fare": Decimal(str(predicted_fare)),
-                "latency_ms": Decimal(str(latency_ms)),
+                "predicted_fare": to_decimal(predicted_fare),
+                "latency_ms": to_decimal(latency_ms),
                 "model_version": MODEL_VERSION,
             })
         except Exception as e:
@@ -155,7 +173,7 @@ def submit_feedback(feedback: FeedbackInput):
         prediction_table.update_item(
             Key={"prediction_id": feedback.prediction_id},
             UpdateExpression="SET feedback_fare = :f",
-            ExpressionAttributeValues={":f": Decimal(str(feedback.actual_fare))},
+            ExpressionAttributeValues={":f": to_decimal(feedback.actual_fare)},
         )
     except Exception as e:
         raise HTTPException(

@@ -1,22 +1,26 @@
 # Backend API
-fastapi
-uvicorn
-pydantic
- 
+fastapi==0.141.1
+uvicorn==0.52.1
+pydantic==2.13.4
+
 # Model training / inference
-pandas
-scikit-learn
-xgboost
-joblib
-pyarrow          # needed by pandas to read .parquet trip data
- 
+pandas==3.0.5
+scikit-learn==1.9.0
+xgboost==3.4.0
+joblib==1.5.3
+pyarrow==24.0.0      # needed by pandas to read .parquet trip data
+
 # Experiment tracking
-wandb
- 
+wandb==0.28.1
+
 # AWS / DynamoDB
-boto3
- 
+boto3==1.43.68
+
 # Frontend apps (prediction UI + monitoring dashboard)
-streamlit
-requests
-matplotlib
+streamlit==1.61.1
+requests==2.34.2
+matplotlib==3.11.1
+
+# Testing
+pytest==9.1.1
+httpx==0.28.1
