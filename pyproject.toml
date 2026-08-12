@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+# Standard pycodestyle errors/warnings + pyflakes, similar in scope to a
+# default flake8 run. Intentionally not enabling stricter opinionated
+# plugins (e.g. flake8-blind-except / BLE) since this project deliberately
+# catches broad exceptions around external calls (W&B, DynamoDB) so a
+# single failed dependency doesn't crash the whole API.
+select = ["E", "F", "W"]

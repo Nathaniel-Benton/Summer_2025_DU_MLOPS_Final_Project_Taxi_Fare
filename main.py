@@ -19,7 +19,12 @@ try:
     api = wandb.Api()
 
     # Target the production-tuned XGBoost artifact we identified on the dashboard
-    artifact = api.artifact("models-university-of-denver9526/DU_Summer25_Final_Project_Taxi_Fare/taxi-fare-xgboost-tuned:latest")
+    artifact_ref = (
+        "models-university-of-denver9526/"
+        "DU_Summer25_Final_Project_Taxi_Fare/"
+        "taxi-fare-xgboost-tuned:latest"
+    )
+    artifact = api.artifact(artifact_ref)
     artifact_dir = artifact.download()
 
     # Load the model weights into memory
