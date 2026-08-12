@@ -69,7 +69,7 @@ if submitted:
 
     except requests.exceptions.ConnectionError:
         st.error(
-            f"Could not reach FASTAPI. Make sure the FastAPI backend is running."
+            "Could not reach FASTAPI. Make sure the FastAPI backend is running."
         )
     except requests.exceptions.HTTPError as e:
         st.error(f"API returned an error: {e}")
