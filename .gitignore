@@ -5,12 +5,14 @@ __pycache__/
 venv/
 .venv/
 .env
+.pytest_cache/
 
 # Windows metadata (WSL downloads)
 *:Zone.Identifier
 
-# W&B local run cache
+# W&B local run cache / downloaded artifacts
 wandb/
+artifacts/
 
 # Data files (Don't push heavy raw datasets or samples to Git)
 *.parquet

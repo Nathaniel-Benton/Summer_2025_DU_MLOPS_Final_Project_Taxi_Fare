@@ -1,0 +1,31 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Ensure print() output (model load / DynamoDB connection status) shows up
+# immediately in `docker logs` instead of sitting in a buffer.
+ENV PYTHONUNBUFFERED=1
+
+# Install dependencies first so Docker can cache this layer across builds
+# where only application code changes, not requirements.
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY main.py .
+
+EXPOSE 8001
+
+# AWS credentials and the W&B API key are NOT baked into the image.
+# Pass them at `docker run` time, e.g.:
+#   docker run -p 8001:8001 \
+#     -e AWS_ACCESS_KEY_ID=... \
+#     -e AWS_SECRET_ACCESS_KEY=... \
+#     -e AWS_SESSION_TOKEN=... \
+#     -e AWS_DEFAULT_REGION=us-east-1 \
+#     -e WANDB_API_KEY=... \
+#     taxi-fare-backend
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]

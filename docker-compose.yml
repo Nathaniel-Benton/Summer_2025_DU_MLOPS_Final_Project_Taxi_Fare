@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8001:8001"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+      - WANDB_API_KEY=${WANDB_API_KEY}
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://backend:8001
+    depends_on:
+      - backend
+
+# Values above are read from a local .env file (not committed — see
+# .gitignore) containing:
+#   AWS_ACCESS_KEY_ID=...
+#   AWS_SECRET_ACCESS_KEY=...
+#   AWS_SESSION_TOKEN=...
+#   AWS_DEFAULT_REGION=us-east-1
+#   WANDB_API_KEY=...
+#
+# The monitoring dashboard isn't included here on purpose — the assignment
+# wants it deployed as a genuinely separate app on its own EC2 instance,
+# talking to the database rather than to these containers. Run/build it
+# independently with Dockerfile.monitoring.

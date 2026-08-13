@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY streamlit_app.py .
+
+EXPOSE 8501
+
+# Point this at wherever the backend actually lives — for local Docker
+# testing that's the backend container's service name (see docker-compose.yml),
+# for EC2 deployment it'll be the backend instance's address, e.g.:
+#   docker run -p 8501:8501 -e API_URL=http://<backend-ip>:8001 taxi-fare-frontend
+ENV API_URL=http://backend:8001
+
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]

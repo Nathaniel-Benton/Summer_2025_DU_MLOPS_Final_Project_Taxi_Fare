@@ -1,0 +1,28 @@
+# Version control / IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Python environment / cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Model artifacts (downloaded fresh from W&B at container startup instead)
+*.pkl
+artifacts/
+wandb/
+
+# Local AWS credentials — must NEVER be baked into an image.
+# Pass credentials at `docker run` time via -e flags instead.
+.aws/
+
+# Tests (not needed inside the runtime image)
+tests/
+conftest.py
+
+# Docs
+README.md
