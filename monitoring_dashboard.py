@@ -1,3 +1,4 @@
+# Import libraries
 import os
 from decimal import Decimal
 
@@ -6,13 +7,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Taxi Fare Model — Monitoring Dashboard", layout="wide")
+# Set page config title
+st.set_page_config(page_title="Taxi Fare Model — Monitoring Dashboard")
 
 TABLE_NAME = os.getenv("DYNAMODB_TABLE_NAME", "taxi-fare-predictions")
 
 
 def _to_float(x):
-    """DynamoDB returns numeric fields as Decimal; convert for pandas/matplotlib."""
+    """DynamoDB returns numeric fields as Decimal."""
     return float(x) if isinstance(x, Decimal) else x
 
 
@@ -59,30 +61,33 @@ def load_logs() -> pd.DataFrame:
 
     return df
 
-
+# Sets the title for the page
 st.title("Taxi Fare Model — Monitoring Dashboard")
 
+# Set refresh button
 col_refresh, _ = st.columns([1, 5])
 with col_refresh:
     if st.button("Refresh"):
         st.cache_data.clear()
 
+# Loads logs and warns if empty
 df = load_logs()
 
 if df.empty:
     st.warning(
-        "No prediction logs found yet. Send some requests to /predict first, "
-        "or check your DynamoDB connection."
+        "No prediction logs found yet. Send some requests first, "
+        "or check your AWS connection."
     )
     st.stop()
 
+# Displays how many logs are loaded
 st.write(f"Loaded {len(df)} logged predictions.")
 
 # --- Feedback / live accuracy ---
 has_feedback = "feedback_fare" in df.columns
 labeled_df = df[df["feedback_fare"].notna()].copy() if has_feedback else pd.DataFrame()
 
-st.subheader("Live Accuracy (from user feedback)")
+st.subheader("Accuracy from user feedback")
 
 if not labeled_df.empty:
     labeled_df["abs_error"] = (labeled_df["predicted_fare"] - labeled_df["feedback_fare"]).abs()
@@ -90,15 +95,15 @@ if not labeled_df.empty:
 
     mae = labeled_df["abs_error"].mean()
     mape = labeled_df["pct_error"].mean()
-    within_2_dollars = (labeled_df["abs_error"] <= 2).mean() * 100
+    within_3_dollars = (labeled_df["abs_error"] <= 3).mean() * 100
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Mean Absolute Error", f"${mae:.2f}")
     col2.metric("Mean Absolute % Error", f"{mape:.1f}%")
-    col3.metric("Within $2 of actual", f"{within_2_dollars:.1f}%")
+    col3.metric("Within $3 of actual", f"{within_3_dollars:.1f}%")
 
-    if mae > 5:
-        st.error(f"Mean absolute error is ${mae:.2f}, above the $5 threshold. Investigate the model.")
+    if mae > 4:
+        st.error(f"Mean absolute error is ${mae:.2f}, above the $4 threshold. Investigate the model.")
 else:
     st.info("No feedback collected yet — submit actual fares via the prediction app to populate this.")
 

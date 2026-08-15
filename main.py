@@ -1,3 +1,4 @@
+# Import libraries
 import time
 import uuid
 from datetime import datetime, timezone
@@ -13,12 +14,14 @@ from pydantic import BaseModel
 app = FastAPI(title="Taxi Fare Prediction", version="2.2")
 
 # --- Initialize W&B API and Load Production Model ---
-# This downloads the best-performing model version directly from W&B
+# Downloads the current "latest" tagged version of the tuned XGBoost artifact from the W&B Model Registry.
+
+MODEL_VERSION = "unknown"
+
 try:
     print("Connecting to W&B to download the latest production model...")
     api = wandb.Api()
 
-    # Target the production-tuned XGBoost artifact we identified on the dashboard
     artifact_ref = (
         "models-university-of-denver9526/"
         "DU_Summer25_Final_Project_Taxi_Fare/"
@@ -26,30 +29,22 @@ try:
     )
     artifact = api.artifact(artifact_ref)
     artifact_dir = artifact.download()
+    MODEL_VERSION = f"taxi-fare-xgboost-tuned:{artifact.version}"
 
-    # Load the model weights into memory
     model_path = f"{artifact_dir}/taxi_fare_xgb_tuned.pkl"
     model = joblib.load(model_path)
-    print("Model loaded successfully from W&B Artifacts!")
+    print(f"Model loaded successfully from W&B Artifacts! (version: {MODEL_VERSION})")
 except Exception as e:
     print(f"Error loading model from W&B: {e}")
     model = None
 
-# Optional: Load dataset for example/random sampling endpoints if needed
-try:
-    df = pd.read_parquet("https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet")
-except Exception:
-    df = None
-
 # --- Initialize DynamoDB connection ---
-# Table used to log every prediction request for later monitoring/drift analysis
+# Table used to log every prediction request for monitoring and data drift
 DYNAMODB_TABLE_NAME = "taxi-fare-predictions"
-MODEL_VERSION = "xgb_tuned_latest"
 
 try:
     dynamodb = boto3.resource("dynamodb")
     prediction_table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-    # Cheap call to confirm the table is reachable at startup
     _ = prediction_table.table_status
     print(f"Connected to DynamoDB table '{DYNAMODB_TABLE_NAME}'")
 except Exception as e:
@@ -73,9 +68,7 @@ class FeedbackInput(BaseModel):
 
 def build_input_dataframe(trip: TripInput) -> pd.DataFrame:
     """
-    Convert a TripInput into the single-row DataFrame layout the model
-    expects. Pulled out as its own function so it can be unit tested
-    without needing a loaded model or any AWS/W&B dependency.
+    Convert a TripInput into the single-row DataFrame layout the model expects.
     """
     return pd.DataFrame([{
         "trip_distance": trip.trip_distance,
@@ -88,9 +81,7 @@ def build_input_dataframe(trip: TripInput) -> pd.DataFrame:
 
 def to_decimal(value) -> Decimal:
     """
-    Convert a float to a DynamoDB-safe Decimal via string, to avoid
-    binary floating-point artifacts (e.g. Decimal(0.1) picking up long
-    trailing digits). DynamoDB rejects native Python floats outright.
+    Convert a float to a Decimal via string, to avoid binary floating-point artifacts.
     """
     return Decimal(str(value))
 
@@ -113,8 +104,8 @@ def health_check():
 def predict(trip: TripInput):
     """
     Prediction Endpoint
-    Takes trip attributes, formats them into a DataFrame, returns the predicted
-    taxi fare, and logs the request/response to DynamoDB for monitoring.
+    Takes trip attributes, formats them into a DataFrame, returns the predicted taxi fare,
+    and logs the request/response to DynamoDB for monitoring.
     """
     if model is None:
         raise HTTPException(
@@ -134,8 +125,7 @@ def predict(trip: TripInput):
     latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
     prediction_id = str(uuid.uuid4())
 
-    # Log the prediction to DynamoDB. A logging failure should never break
-    # the prediction response itself, so this is wrapped separately.
+    # Log the prediction to DynamoDB
     if prediction_table is not None:
         try:
             prediction_table.put_item(Item={
