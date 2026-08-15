@@ -1,8 +1,4 @@
-"""
-Unit tests for the pure helper functions in main.py: build_input_dataframe
-and to_decimal. These don't require a loaded model, DynamoDB, or W&B —
-they test data preprocessing logic in isolation.
-"""
+# Import libraries
 from decimal import Decimal
 
 import pandas as pd

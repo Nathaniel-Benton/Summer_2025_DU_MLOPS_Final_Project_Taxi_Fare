@@ -1,16 +1,4 @@
-"""
-Integration tests for the FastAPI endpoints in main.py.
-
-main.py attempts to load a real model from W&B and connect to a real
-DynamoDB table at import time. Both are wrapped in try/except and fall
-back to None on failure, which is exactly what happens in a CI
-environment with no credentials configured — so importing `main` here
-is safe and won't hit any real network calls.
-
-Each test then monkeypatches `main.model` and/or `main.prediction_table`
-with fakes to exercise both the "healthy" and "degraded" code paths
-without depending on any external service.
-"""
+# Import libraries
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
