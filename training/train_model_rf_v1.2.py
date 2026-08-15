@@ -23,7 +23,7 @@ def get_git_commit():
     return "not_a_git_repo"
 
 
-# 1. Initialize Weights & Biases tracking
+# Initialize Weights & Biases tracking
 run = wandb.init(
     entity="models-university-of-denver9526",
     project="DU_Summer25_Final_Project_Taxi_Fare",
@@ -40,6 +40,7 @@ run = wandb.init(
     },
 )
 
+# Reads in the dataset
 print("Loading dataset...")
 url = wandb.config.dataset_source
 df = pd.read_parquet(url)
@@ -47,6 +48,7 @@ df = pd.read_parquet(url)
 print("Sampling data...")
 df = df.sample(n=wandb.config.sample_size, random_state=42)
 
+# Drop N/A values from all rows
 print("Cleaning data...")
 df = df.dropna(
     subset=[
@@ -59,6 +61,7 @@ df = df.dropna(
     ]
 )
 
+# Sets features
 features = [
     "trip_distance",
     "passenger_count",
@@ -73,9 +76,11 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=wandb.config.test_size, random_state=42
 )
 
+# Set feature types
 numeric_features = ["trip_distance", "passenger_count"]
 categorical_features = ["PULocationID", "DOLocationID", "RatecodeID"]
 
+# ColumnTransormer for scaling and encoding
 preprocessor = ColumnTransformer(
     transformers=[
         ("numeric", StandardScaler(), numeric_features),
@@ -129,6 +134,7 @@ best_model = grid_search.best_estimator_
 print("Evaluating model on test data...")
 y_pred = best_model.predict(X_test)
 
+# Model performance metrics
 rmse = float(np.sqrt(mean_squared_error(y_test, y_pred)))
 mae = float(mean_absolute_error(y_test, y_pred))
 r2 = float(r2_score(y_test, y_pred))
@@ -141,7 +147,7 @@ print(f"R-squared (R²):                {r2:.4f}")
 # Log evaluation metrics to W&B
 run.log({"test_rmse": rmse, "test_mae": mae, "test_r2": r2})
 
-# Save model locally
+# Save model
 model_filename = "taxi_fare_random_forest.pkl"
 joblib.dump(best_model, model_filename)
 print(
