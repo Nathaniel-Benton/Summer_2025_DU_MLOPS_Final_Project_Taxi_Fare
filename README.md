@@ -1,7 +1,9 @@
 # Taxi Fare Prediction Final Project
 
 This MLOps final project uses an XGBoost model to predict NYC taxi trip fares from trip distance, passenger count, and pickup/dropoff location IDs. It covers the full MLOps lifecycle from experiment tracking and model registry, a FastAPI backend, a user interface, model monitoring, testing, CI/CD, containerization, and deployment. For the experiment tracking, I used Weights & Biases and AWS for deployment including DynamoDB and EC2 for storage and hosting.
+
 ---
+
 ## Setup Instructions
 Clone the repo and set up a virtual environment:
 ```
@@ -12,11 +14,13 @@ Clone the repo and set up a virtual environment:
   pip install -r requirements.txt
 ```
 ---
+
 Configure Weights & Biases:
 ```
   wandb login
 ```
 ---
+
 Paste your Weights and Biases API key into the terminal after running that command.
 
 If need be, you will need to train a new model to be tracked and logged within W&B automatically:
@@ -24,6 +28,7 @@ If need be, you will need to train a new model to be tracked and logged within W
   python3 training/train_model_xgb_v2.2.py
 ```
 ---
+
 Configure AWS credentials for running locally to test all applications. These will need to be updated each time the AWS console is started:
 ```
 ~/.aws/credentials
@@ -40,12 +45,14 @@ Configure AWS credentials for running locally to test all applications. These wi
   region=us-east-1
 ```
 ---
+
 Setting up DynamoDB in the AWS Learner Lab
 In the AWS Console, go to DynamoDB → Tables → Create table and name it taxi-fare-predictions. For the partition key it was set to prediction_id. Under Table settings confirm that the capacity is set to on-demand and leave all other defaults and click Create table. Make sure the table status showsActive before running any of the apps that connect to it.
 
 No other setup is required — `main.py` and `monitoring_dashboard.py` both connect to this table automatically via `boto3`, as long as valid AWS credentials are available (see Setup Instructions above).
 
 ---
+
 Run the app locally
 Backend API
 ```
@@ -64,7 +71,9 @@ Monitoring Dashboard
   streamlit run monitoring_dashboard.py --server.port 8502
 ```
   dashboard, http://localhost:8502
+
 ---
+
 Run tests
 ```
   pytest tests/ -v
@@ -86,6 +95,7 @@ Update an .env file and fill in current AWS credentials and your W&B API key
   AWS_SESSION_TOKEN=...
   AWS_DEFAULT_REGION=us-east-1
   WANDB_API_KEY=...
+
 ---
 
 Docker builds for:
@@ -101,6 +111,7 @@ Monitoring files:
 ```
 
 This will run all files on the local host and will allow health, predictions, and feeback submitals to be sent to the AWS DynamoDB data storage. This will communicate with the monitoring dashboard to allow for all monitoring checks.
+
 ---
 
 Launching the EC2 instances
@@ -112,13 +123,16 @@ In the AWS Console, go to EC2 → Instances → Launch instance. Name the instan
 For the first instance set up, you will need to create a key pair using RSA .pem format. This will need to be downloaded and reused for all instances.
 
 The network settings should be set to allow SSH traffic with My IP selected. As a second security group rule, it should be set to a Custom TCP with a port range of 8001 for the backend, 8501 for the frontend, and 8502 for the monitoring instance with the source set to Anywhere.Once this is set up, you will need to pressLaunch instance and wait for status to show Running. Next you will copy the Public IPv4 address to add to the ssh connection point.
+
 ---
+
 ```
 chmod 400 ~/.ssh/<your-key>.pem
 ssh -i ~/.ssh/<your-key>.pem ec2-user@<INSTANCE_PUBLIC_IP>
 ```
 
 ---
+
 For setting this MLOPs up with the EC2 instances, the following steps should be taken after the AWS instances are set up on the AWS cloud:
 AWS EC2 set up: the backend, prediction frontend, and monitoring dashboard each run on their own t3.micro EC2 instance (a total of three instances).
 
@@ -168,6 +182,7 @@ API health
 ```
 This should print the message:
   {"status": "ok", "message": "API is running and model is loaded"}
+
 ---
 
 API prediction
@@ -187,6 +202,7 @@ This should pring a message something like this:
     "prediction_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "predicted_fare_amount": 18.42
   }
+
 ---
 
 API feedback
@@ -200,6 +216,7 @@ API feedback
 ```
 This should print something like this:
   {"status": "feedback recorded", "prediction_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"}
+
 ---
 
 Or, you can use the UI directly by launching it and interacting with it there either locally, or while set up on the instances. When doing so, you will be able to determine if it is working if the predictions are appearing in the DynamoDB database.
